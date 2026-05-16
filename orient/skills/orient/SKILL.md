@@ -132,7 +132,7 @@ Get-ChildItem -Recurse -Depth 3 -Force |
   Select-Object -ExpandProperty FullName
 ```
 
-Read the directory tree as an architectural table of contents — naming conventions (`src/`, `lib/`, `tests/`, `cmd/`, `pkg/`, `sources/`) reveal intent before any code is read.
+Read the directory tree as an architectural table of contents — naming conventions (`src/`, `lib/`, `tests/`, `cmd/`, `pkg/`) reveal intent before any code is read.
 
 *Source: Spinellis (2003) — "directory tree as table of contents."*
 

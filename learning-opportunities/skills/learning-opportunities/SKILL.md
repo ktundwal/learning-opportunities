@@ -194,10 +194,11 @@ If this skill is invoked with the argument `orient` (i.e., `/learning-opportunit
 
 Look for `resources/orientation.md` relative to the user's project or user-level skills at these locations, in order:
 
-1. `.codex/skills/learning-opportunities/resources/orientation.md` (Codex project level)
-2. `.claude/skills/learning-opportunities/resources/orientation.md` (Claude Code project level)
-3. `~/.codex/skills/learning-opportunities/resources/orientation.md` (Codex user level)
-4. `~/.claude/skills/learning-opportunities/resources/orientation.md` (Claude Code user level)
+1. `.github/copilot-orientation.md` (GitHub Copilot CLI project level)
+2. `.codex/skills/learning-opportunities/resources/orientation.md` (Codex project level)
+3. `.claude/skills/learning-opportunities/resources/orientation.md` (Claude Code project level)
+4. `~/.codex/skills/learning-opportunities/resources/orientation.md` (Codex user level)
+5. `~/.claude/skills/learning-opportunities/resources/orientation.md` (Claude Code user level)
 
 If the file does not exist at either location, stop and tell the user:
 

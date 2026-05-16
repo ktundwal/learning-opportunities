@@ -1,5 +1,9 @@
 # Changelog
 
+## learning-opportunities 1.0.1
+
+**Fixed:** Discovery loop in `Orientation mode` now also checks `.github/copilot-orientation.md` (the GitHub Copilot CLI project-level path written by orient v1.1.0). Without this, orient and the consumer skill could silently miss each other under Copilot CLI — orient would write the file, the consumer would tell the user to invoke orient. The new path is checked first, so Copilot CLI users get the orient-generated orientation file without falling through to the legacy Codex/Claude paths.
+
 ## orient 1.1.0
 
 Quality-of-life improvements to make `orient` work first-class on Windows and on C#/.NET repos, and to amplify (not duplicate) any onboarding investment a repo already has.
