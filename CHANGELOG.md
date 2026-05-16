@@ -1,5 +1,23 @@
 # Changelog
 
+## learning-opportunities 1.0.1
+
+**Fixed:** Discovery loop in `Orientation mode` now also checks `.github/copilot-orientation.md` (the GitHub Copilot CLI project-level path written by orient v1.1.0). Without this, orient and the consumer skill could silently miss each other under Copilot CLI — orient would write the file, the consumer would tell the user to invoke orient. The new path is checked first, so Copilot CLI users get the orient-generated orientation file without falling through to the legacy Codex/Claude paths.
+
+## orient 1.1.0
+
+Quality-of-life improvements to make `orient` work first-class on Windows and on C#/.NET repos, and to amplify (not duplicate) any onboarding investment a repo already has.
+
+**New:**
+- **GitHub Copilot CLI write path** — when running under Copilot CLI, `orientation.md` is written to `.github/copilot-orientation.md` (conventional repo-level location, alongside the existing `.codex/` and `.claude/` paths).
+- **Step 2.5: Inherit from existing onboarding docs** — before re-deriving anything, orient now reads `.github/copilot-instructions.md`, `AGENTS.md`, `CLAUDE.md`, `.cursorrules`, `CONTRIBUTING.md`, and `docs/` indexes. These become the primary source of truth; Step 3 becomes a sanity check and gap-fill.
+- **Prerequisites & secrets** section added to the orientation template — captures required env vars, SDK pins, cloud auth, local services, and platform-specific notes that aren't covered by the package manifest.
+
+**Improved:**
+- **C#/.NET detection** — Step 2 signal list now includes `*.slnx` (SLN-XML), `Directory.Packages.props`, and `global.json`. Step 3c gets a new C#/.NET entry-point row covering `Program.cs` (top-level statements or `Main`), ASP.NET Core `WebApplication.CreateBuilder`/`IHostBuilder`, multi-project solution discovery, and SDK/package-pin signals. Also adds Java/Kotlin `main` and Spring Boot entry-point guidance.
+- **PowerShell variants** — Step 3b directory walk and Step 3f git-churn analysis now ship both bash and pwsh versions, so Windows users get accurate output without WSL.
+- **Expanded directory-tree ignore list** — Step 3b now also excludes `bin/`, `obj/`, `out/`, `dist/`, `target/`, `packages/`, `.vs/`, `TestResults/` so .NET, Java, and Rust repos don't drown the architectural view in build output.
+
 ## learning-opportunities-auto 2.0.0
 
 **New: GitHub Copilot CLI support** (alongside Claude Code and Codex).
