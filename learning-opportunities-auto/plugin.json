@@ -9,5 +9,7 @@
   "homepage": "https://github.com/DrCatHicks/learning-opportunities",
   "repository": "https://github.com/DrCatHicks/learning-opportunities",
   "license": "CC-BY-4.0",
-  "keywords": ["learning", "education", "skill-development", "expertise", "learning-science"]
+  "keywords": ["learning", "education", "skill-development", "expertise", "learning-science", "hooks"],
+  "category": "education",
+  "hooks": "./hooks.copilot.json"
 }

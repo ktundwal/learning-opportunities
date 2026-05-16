@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "hooks": {
+    "PostToolUse": [
+      {
+        "type": "command",
+        "bash": "set -uo pipefail\nINPUT=$(cat)\necho \"$INPUT\" | grep -Eq '\"tool_name\":\"(bash|powershell)\"' || exit 0\necho \"$INPUT\" | grep -Eq '\"command\":\".*git.*commit' || exit 0\nSID=$(echo \"$INPUT\" | grep -o '\"session_id\":\"[^\"]*\"' | head -1 | cut -d'\"' -f4)\n[ -z \"$SID\" ] && exit 0\nSAFE=\"${SID//[^a-zA-Z0-9_-]/_}\"\ntouch \"${TMPDIR:-/tmp}/lo_auto_copilot_${SAFE}.commit\"\nexit 0\n",
+        "powershell": "$ErrorActionPreference = 'Stop'\n$in = [Console]::In.ReadToEnd()\nif ($in -notmatch '\"tool_name\"\\s*:\\s*\"(bash|powershell)\"') { exit 0 }\nif ($in -notmatch '\"command\"\\s*:\\s*\".*git.*commit') { exit 0 }\n$m = [regex]::Match($in, '\"session_id\"\\s*:\\s*\"([^\"]+)\"')\nif (-not $m.Success) { exit 0 }\n$sid = $m.Groups[1].Value -replace '[^a-zA-Z0-9_-]', '_'\n$tmp = if ($env:TEMP) { $env:TEMP } else { '/tmp' }\n$null = New-Item -ItemType File -Path (Join-Path $tmp (\"lo_auto_copilot_$sid.commit\")) -Force\nexit 0\n",
+        "timeoutSec": 5
+      }
+    ],
+    "Stop": [
+      {
+        "type": "command",
+        "bash": "set -uo pipefail\nINPUT=$(cat)\nSID=$(echo \"$INPUT\" | grep -o '\"session_id\":\"[^\"]*\"' | head -1 | cut -d'\"' -f4)\n[ -z \"$SID\" ] && exit 0\nSAFE=\"${SID//[^a-zA-Z0-9_-]/_}\"\nT=\"${TMPDIR:-/tmp}\"\nM=\"$T/lo_auto_copilot_${SAFE}.commit\"\nC=\"$T/lo_auto_copilot_${SAFE}.offers\"\n[ ! -f \"$M\" ] && exit 0\nn=0\n[ -f \"$C\" ] && n=$(cat \"$C\" 2>/dev/null || echo 0)\nif [ \"$n\" -ge 2 ]; then rm -f \"$M\"; exit 0; fi\necho $((n+1)) > \"$C\"\nrm -f \"$M\"\nprintf '%s' '{\"decision\":\"block\",\"reason\":\"[learning-opportunities-auto] The user just committed code. Per the learning-opportunities skill, consider whether this is a good moment to offer a learning exercise. If the committed work involved new files, schema changes, architectural decisions, refactors, or unfamiliar patterns, ask the user (one short sentence) if they would like a 10-15 minute exercise. Do not start the exercise until they confirm. If they decline, note it - no more offers this session.\"}'\nexit 0\n",
+        "powershell": "$ErrorActionPreference = 'Stop'\n$in = [Console]::In.ReadToEnd()\n$m = [regex]::Match($in, '\"session_id\"\\s*:\\s*\"([^\"]+)\"')\nif (-not $m.Success) { exit 0 }\n$sid = $m.Groups[1].Value -replace '[^a-zA-Z0-9_-]', '_'\n$tmp = if ($env:TEMP) { $env:TEMP } else { '/tmp' }\n$marker  = Join-Path $tmp (\"lo_auto_copilot_$sid.commit\")\n$counter = Join-Path $tmp (\"lo_auto_copilot_$sid.offers\")\nif (-not (Test-Path $marker)) { exit 0 }\n$n = 0\nif (Test-Path $counter) {\n    try { $n = [int](Get-Content -Raw $counter) } catch { $n = 0 }\n}\nif ($n -ge 2) { Remove-Item -Force $marker -ErrorAction SilentlyContinue; exit 0 }\nSet-Content -Path $counter -Value (($n + 1).ToString()) -NoNewline\nRemove-Item -Force $marker -ErrorAction SilentlyContinue\n[Console]::Out.Write('{\"decision\":\"block\",\"reason\":\"[learning-opportunities-auto] The user just committed code. Per the learning-opportunities skill, consider whether this is a good moment to offer a learning exercise. If the committed work involved new files, schema changes, architectural decisions, refactors, or unfamiliar patterns, ask the user (one short sentence) if they would like a 10-15 minute exercise. Do not start the exercise until they confirm. If they decline, note it - no more offers this session.\"}')\nexit 0\n",
+        "timeoutSec": 5
+      }
+    ],
+    "SubagentStop": [
+      {
+        "type": "command",
+        "bash": "set -uo pipefail\nINPUT=$(cat)\nSID=$(echo \"$INPUT\" | grep -o '\"session_id\":\"[^\"]*\"' | head -1 | cut -d'\"' -f4)\n[ -z \"$SID\" ] && exit 0\nSAFE=\"${SID//[^a-zA-Z0-9_-]/_}\"\nT=\"${TMPDIR:-/tmp}\"\nM=\"$T/lo_auto_copilot_${SAFE}.commit\"\nC=\"$T/lo_auto_copilot_${SAFE}.offers\"\n[ ! -f \"$M\" ] && exit 0\nn=0\n[ -f \"$C\" ] && n=$(cat \"$C\" 2>/dev/null || echo 0)\nif [ \"$n\" -ge 2 ]; then rm -f \"$M\"; exit 0; fi\necho $((n+1)) > \"$C\"\nrm -f \"$M\"\nprintf '%s' '{\"decision\":\"block\",\"reason\":\"[learning-opportunities-auto] The user just committed code. Per the learning-opportunities skill, consider whether this is a good moment to offer a learning exercise. If the committed work involved new files, schema changes, architectural decisions, refactors, or unfamiliar patterns, ask the user (one short sentence) if they would like a 10-15 minute exercise. Do not start the exercise until they confirm. If they decline, note it - no more offers this session.\"}'\nexit 0\n",
+        "powershell": "$ErrorActionPreference = 'Stop'\n$in = [Console]::In.ReadToEnd()\n$m = [regex]::Match($in, '\"session_id\"\\s*:\\s*\"([^\"]+)\"')\nif (-not $m.Success) { exit 0 }\n$sid = $m.Groups[1].Value -replace '[^a-zA-Z0-9_-]', '_'\n$tmp = if ($env:TEMP) { $env:TEMP } else { '/tmp' }\n$marker  = Join-Path $tmp (\"lo_auto_copilot_$sid.commit\")\n$counter = Join-Path $tmp (\"lo_auto_copilot_$sid.offers\")\nif (-not (Test-Path $marker)) { exit 0 }\n$n = 0\nif (Test-Path $counter) {\n    try { $n = [int](Get-Content -Raw $counter) } catch { $n = 0 }\n}\nif ($n -ge 2) { Remove-Item -Force $marker -ErrorAction SilentlyContinue; exit 0 }\nSet-Content -Path $counter -Value (($n + 1).ToString()) -NoNewline\nRemove-Item -Force $marker -ErrorAction SilentlyContinue\n[Console]::Out.Write('{\"decision\":\"block\",\"reason\":\"[learning-opportunities-auto] The user just committed code. Per the learning-opportunities skill, consider whether this is a good moment to offer a learning exercise. If the committed work involved new files, schema changes, architectural decisions, refactors, or unfamiliar patterns, ask the user (one short sentence) if they would like a 10-15 minute exercise. Do not start the exercise until they confirm. If they decline, note it - no more offers this session.\"}')\nexit 0\n",
+        "timeoutSec": 5
+      }
+    ]
+  }
+}
