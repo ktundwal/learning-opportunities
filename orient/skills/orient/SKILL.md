@@ -30,7 +30,15 @@ When running in Claude Code, write to:
 .claude/skills/learning-opportunities/resources/orientation.md
 ```
 
-Both paths are relative to the current working directory.
+When running in GitHub Copilot CLI, write to:
+
+```
+.github/copilot-orientation.md
+```
+
+(Copilot CLI plugins live under `~/.copilot/installed-plugins/` and don't expose a stable project-level skill resource path, so we use a conventional repo-level file instead. The `learning-opportunities` skill will look for this file when invoked with the `orient` argument under Copilot CLI.)
+
+All paths are relative to the current working directory.
 
 If the target directory does not exist, create it. If it already exists, leave it and any files inside it untouched — only write `orientation.md`.
 
@@ -63,9 +71,27 @@ Check for these manifest/config files at the project root and note all that exis
 | Rust       | `Cargo.toml`                                              |
 | C/C++      | `CMakeLists.txt`, `configure.ac`, root-level `Makefile`  |
 | Java/Kotlin| `pom.xml`, `build.gradle`, `build.gradle.kts`            |
-| C#         | any `*.csproj` or `*.sln`                                |
+| C#         | any `*.csproj`, `*.sln`, `*.slnx`, `Directory.Packages.props`, `global.json` |
 
 Record all detected languages. For each detected language, read its primary manifest file in full — it contains declared purpose, dependencies, entry points, and scripts/commands that are essential for orientation.
+
+---
+
+## Step 2.5: Inherit from existing onboarding docs
+
+Before re-deriving anything in Step 3, check whether the repo already invests in agent or contributor onboarding. If any of the following exist, **read them in full first** and treat them as the primary source of truth for purpose, architecture, conventions, and gotchas. The Step 3 exploration then becomes a sanity check and gap-fill rather than a from-scratch discovery.
+
+Files to check (in priority order):
+
+1. `.github/copilot-instructions.md` — repo-scoped Copilot guidance
+2. `AGENTS.md`, `CLAUDE.md`, `.cursorrules` — agent instruction files at the repo root
+3. `CONTRIBUTING.md` — human contributor onboarding
+4. `docs/`, `Docs/`, or `documentation/` directory — read the index (`README.md`, `index.md`, or `_toc.md`) plus any file that looks like an "architecture", "getting started", "overview", or "onboarding" doc
+5. Any `*.md` at the repo root that isn't `README`, `CHANGELOG`, `LICENSE`, `SECURITY`, or `CODE_OF_CONDUCT`
+
+When generating `orientation.md` in Step 4, **cite these inherited sources** in the "Sources consulted" section and **defer to them** when their content conflicts with what you'd otherwise infer from code. The goal is to amplify existing onboarding investment, not to duplicate or contradict it.
+
+If none of these exist, skip this step and proceed to Step 3.
 
 ---
 
@@ -79,7 +105,34 @@ Read `README.md`, `README.rst`, or `README` at the project root. Also check for 
 *Source: Spinellis, "Code Reading: The Open Source Perspective" (2003) — start with the build system and README before reading any application code.*
 
 ### 3b. Directory tree
-Run `find . -maxdepth 3 -not -path '*/.git/*' -not -path '*/node_modules/*' -not -path '*/__pycache__/*' -not -path '*/.venv/*'` to get the top-level structure. Read the directory tree as an architectural table of contents — naming conventions (`src/`, `lib/`, `tests/`, `cmd/`, `pkg/`) reveal intent before any code is read.
+Get the top-level structure (depth 3, excluding build/VCS/dependency caches). Pick the variant that matches the shell you're in.
+
+**bash / zsh (macOS, Linux, Git Bash):**
+```sh
+find . -maxdepth 3 \
+  -not -path '*/.git/*' \
+  -not -path '*/node_modules/*' \
+  -not -path '*/__pycache__/*' \
+  -not -path '*/.venv/*' \
+  -not -path '*/bin/*' \
+  -not -path '*/obj/*' \
+  -not -path '*/out/*' \
+  -not -path '*/dist/*' \
+  -not -path '*/target/*' \
+  -not -path '*/packages/*' \
+  -not -path '*/.vs/*' \
+  -not -path '*/TestResults/*'
+```
+
+**PowerShell (Windows pwsh, also works on macOS/Linux pwsh):**
+```powershell
+$exclude = @('.git','node_modules','__pycache__','.venv','bin','obj','out','dist','target','packages','.vs','TestResults')
+Get-ChildItem -Recurse -Depth 3 -Force |
+  Where-Object { $p = $_.FullName; -not ($exclude | Where-Object { $p -match "[\\/]$_[\\/]?" }) } |
+  Select-Object -ExpandProperty FullName
+```
+
+Read the directory tree as an architectural table of contents — naming conventions (`src/`, `lib/`, `tests/`, `cmd/`, `pkg/`, `sources/`) reveal intent before any code is read.
 
 *Source: Spinellis (2003) — "directory tree as table of contents."*
 
@@ -93,6 +146,8 @@ Identify and read the main entry points based on detected language:
 - **R**: `R/` directory, the `DESCRIPTION` file's `Imports`
 - **Ruby**: files in `bin/`, `lib/<gem-name>.rb`
 - **C/C++**: `main.c`, `main.cpp`, or the primary target in `CMakeLists.txt`
+- **C#/.NET**: `Program.cs` (top-level statements or `Main`); for ASP.NET Core, also read the `WebApplication.CreateBuilder` / `IHostBuilder` configuration and any `Startup.cs`. If multiple projects exist, locate the executable projects (`<OutputType>Exe</OutputType>` in `*.csproj`, or projects referenced as startup in `*.sln` / `*.slnx`) and read their `Program.cs` files. Also skim `Directory.Packages.props` (central package management) and `global.json` (SDK pin) for stack signals.
+- **Java/Kotlin**: classes with a `public static void main` / `fun main`; for Spring Boot, the `@SpringBootApplication`-annotated class
 
 *Source: Hermans, "The Programmer's Brain" (2021, Manning) — follow the entry point and call graph one level at a time.*
 
@@ -105,7 +160,23 @@ Read 2–3 test files, prioritizing integration or end-to-end tests over unit te
 Identify the 5–8 most important source files based on what you have learned. Read their top-level structure (class/function names, imports, docstrings) without necessarily reading every implementation in full.
 
 ### 3f. Recent git history (if git is available)
-Run `git log --oneline -20` to see recent activity. Run `git log --format="%f" | sort | uniq -c | sort -rn | head -10` to identify the most-edited files. High-churn files are usually the core of the system.
+Run `git log --oneline -20` to see recent activity. Then identify the most-edited files. Pick the variant that matches the shell you're in.
+
+**bash / zsh:**
+```sh
+git log --format='' --name-only | grep -v '^$' | sort | uniq -c | sort -rn | head -10
+```
+
+**PowerShell:**
+```powershell
+git log --format='' --name-only |
+  Where-Object { $_ -ne '' } |
+  Group-Object |
+  Sort-Object Count -Descending |
+  Select-Object -First 10 Count, Name
+```
+
+High-churn files are usually the core of the system.
 
 *Source: Spolsky practitioner writing — "find the biggest, most-edited file; read git history to understand why code is the way it is."*
 
@@ -136,6 +207,16 @@ Write the file to the path identified in Step 1. Use this exact structure:
 ## Core concepts
 [3–5 domain or architectural concepts essential to working in this codebase. For each:]
 **[Concept name]**: [Plain-English definition. Where in the code it lives.]
+
+## Prerequisites & secrets
+[Anything required to build, run, or test this repo locally that isn't installed by a package manager. Be specific. Examples:
+- Required environment variables (look for `Environment.GetEnvironmentVariable`, `process.env.`, `os.environ`, `os.getenv`, `dotenv`/`.env.example` files, and the README's "Setup", "Getting Started", or "Environment" sections)
+- Required SDKs/toolchains beyond the language manifest (e.g., specific .NET SDK pinned in `global.json`, Node version in `.nvmrc`, Python version in `.python-version`)
+- Required cloud auth (e.g., a logged-in `az` / `gh` / `gcloud` CLI session, a managed-identity context, a service-principal credential file)
+- Required local services (databases, message brokers, emulators)
+- Platform-specific notes (Windows-only scripts, WSL requirements, native dependencies)
+
+If everything needed is fully captured by the package manifest and there are no extra prerequisites, write "None beyond `<manifest file>`." Do NOT pad this section.]
 
 ## Common gotchas
 [2–3 things that commonly trip up new developers. Be specific — reference actual file paths or function names.]
