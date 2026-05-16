@@ -1,0 +1,15 @@
+{
+  "name": "orient",
+  "version": "1.0.0",
+  "description": "Generates a repo-specific orientation.md for use with the learning-opportunities skill",
+  "author": {
+    "name": "Dr. Michael Mullarkey",
+    "url": "https://mcmullarkey.github.io/"
+  },
+  "homepage": "https://mcmullarkey.github.io/",
+  "repository": "https://github.com/DrCatHicks/learning-opportunities",
+  "license": "CC-BY-4.0",
+  "keywords": ["orientation", "onboarding", "learning", "codebase"],
+  "category": "education",
+  "skills": "./skills/"
+}

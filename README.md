@@ -1,4 +1,4 @@
-# Learning Opportunities: A Claude Code and Codex Skill for Deliberate Skill Development
+# Learning Opportunities: A Claude Code, Codex, and GitHub Copilot CLI Skill for Deliberate Skill Development
 
 **Build your expertise, not just your projects.**
 
@@ -10,6 +10,36 @@ Pairs well with [Learning-Goal](https://github.com/DrCatHicks/learning-goal), a 
 
 
 ## Installation
+
+### GitHub Copilot CLI
+
+This repository works as a [GitHub Copilot CLI plugin marketplace](https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/plugins-marketplace). Copilot CLI reads `marketplace.json` from `.claude-plugin/`, so the same marketplace serves all three ecosystems.
+
+1. Add the marketplace:
+   ```
+   copilot plugin marketplace add DrCatHicks/learning-opportunities
+   ```
+
+2. Install the plugins you want:
+   ```
+   copilot plugin install learning-opportunities@learning-opportunities
+   copilot plugin install orient@learning-opportunities
+   ```
+
+   Or install from a local checkout:
+   ```
+   copilot plugin install ./learning-opportunities
+   copilot plugin install ./orient
+   ```
+
+3. Verify they loaded:
+   ```
+   copilot plugin list
+   ```
+
+   In an interactive Copilot CLI session, run `/skills list` to confirm the skills are available, then invoke them with the skill tool (for example: `Run the learning-opportunities skill on the work we just finished`).
+
+> **Note on `learning-opportunities-auto`:** The post-commit nudge plugin currently targets Claude Code and Codex hook formats. Copilot CLI's `postToolUse` event has different output-injection semantics, so a Copilot-native port is tracked as a follow-up. For now, install only `learning-opportunities` and `orient` on Copilot CLI.
 
 ### Codex
 
@@ -49,17 +79,26 @@ This repository is a [Claude Code plugin marketplace](https://docs.claude.com/en
  
 For more on Claude Code plugins, see the [plugin documentation](https://docs.claude.com/en/docs/claude-code/plugins).
 
-### Automatic Prompting (Optional)
+### Automatic Prompting (Optional, Claude Code & Codex)
 
-Linux and macOS users can install `learning-opportunities-auto` alongside `learning-opportunities` to have Claude automatically consider offering an exercise after each git commit. Windows users can use it too — [a little setup is required](./learning-opportunities-auto/README.md#windows-setup).
+Linux and macOS users can install `learning-opportunities-auto` alongside `learning-opportunities` to have Claude or Codex automatically consider offering an exercise after each git commit. Windows users can use it too — [a little setup is required](./learning-opportunities-auto/README.md#windows-setup).
+
+A GitHub Copilot CLI port of `learning-opportunities-auto` is tracked as a follow-up; the plugin is not yet installable in Copilot CLI.
 
 ### Get Repo Orientation Lessons (Optional)
 
 If you're learning a new repo you can create an `orientation.md` file with suggested lessons using the `orient` skill. The orientation approach applies strategies from empirical research on program comprehension and codebase navigation — including how expert developers sample codebases strategically rather than reading exhaustively. See the [orient bibliography](orient/skills/orient/resources/orient-bibliography.md) for the full source list.
 
 Install the orient plugin:
+
+In Claude Code or Codex:
 ```
 /plugin install orient@learning-opportunities
+```
+
+In GitHub Copilot CLI:
+```
+copilot plugin install orient@learning-opportunities
 ```
 
 Navigate to the repo you want to orient yourself to, and call the `orient` skill either as default

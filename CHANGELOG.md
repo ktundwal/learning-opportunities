@@ -1,5 +1,15 @@
 # Changelog
 
+## learning-opportunities + orient: GitHub Copilot CLI support
+
+**New:**
+- `plugin.json` manifest at the root of `learning-opportunities/` and `orient/` so GitHub Copilot CLI (`copilot plugin install ...`) can load them
+- README updated with Copilot CLI install instructions
+- Existing `.claude-plugin/marketplace.json` is reused — Copilot CLI also reads marketplaces from `.claude-plugin/`, so no separate marketplace file is needed
+
+**Not yet ported:**
+- `learning-opportunities-auto` — Copilot CLI's `postToolUse` event does not process hook output, so `additionalContext` injection (the mechanism the auto plugin relies on) is not directly available. A Copilot-native port would likely use the `notification` event instead and is tracked as a follow-up.
+
 ## orient 1.0.0
 
 Added orient plugin to the learning-opportunities marketplace.
