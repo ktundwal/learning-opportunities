@@ -1,7 +1,7 @@
 {
   "name": "learning-opportunities-auto",
-  "version": "1.0.1",
-  "description": "Automatically nudges Codex to offer learning exercises after git commits. Requires the learning-opportunities plugin.",
+  "version": "2.0.0",
+  "description": "Automatically nudges the agent (Claude Code, Codex, or GitHub Copilot CLI) to offer learning exercises after git commits. Requires the learning-opportunities plugin.",
   "author": {
     "name": "Dr. Cat Hicks",
     "email": "dr.cat.hicks@gmail.com",

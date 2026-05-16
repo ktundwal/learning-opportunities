@@ -1,34 +1,53 @@
 # learning-opportunities-auto
 
-A companion plugin for [learning-opportunities](../learning-opportunities/) that automatically detects good moments to offer learning exercises. Instead of relying on Claude to notice opportunities on its own, this plugin uses a `PostToolUse` hook to watch for significant code changes and nudge Claude to make the offer.
+A companion plugin for [learning-opportunities](../learning-opportunities/) that automatically detects good moments to offer learning exercises. Instead of relying on the agent to notice opportunities on its own, this plugin uses post-commit hooks to nudge the agent to make the offer.
 
 **Requires:** The `learning-opportunities` plugin must also be installed.
 
+**Works with:** Claude Code, Codex, and GitHub Copilot CLI.
+
 ## How It Works
 
-The hook fires after every `Bash` tool use and checks whether the command was a `git commit`. After a successful commit, it nudges Claude to consider whether the work that was just committed is a good fit for a learning exercise — the `learning-opportunities` skill handles deciding what kind of exercise to offer based on the nature of the changes.
+The hook fires after every shell tool use and checks whether the command was a `git commit`. After a successful commit, it nudges the agent to consider whether the work that was just committed is a good fit for a learning exercise — the `learning-opportunities` skill handles deciding what kind of exercise to offer based on the nature of the changes.
 
 It respects the same session limits as the skill: no more than 2 offers per session, and it stops if the user declines.
+
+### Copilot CLI design
+
+Copilot CLI's `PostToolUse` event does not process hook stdout, so the plugin uses a **two-hook handshake**:
+
+1. **`PostToolUse`** detects the `git commit` (matching both `bash` and `powershell` tool invocations) and writes a per-session marker file under TMPDIR
+2. **`Stop`** / **`SubagentStop`** read the marker and, if present, emit `{"decision":"block","reason":"<nudge>"}`. Copilot honors the block by forcing one synthetic agent turn whose prompt is the nudge text, which the agent surfaces to the user as a one-line question.
+
+The marker is deleted **before** the block JSON is written, so the synthetic turn's own `Stop` event finds no marker and exits silently — no loop is possible.
+
+The hook scripts are inlined directly in `hooks.copilot.json` for both bash and PowerShell, so no env-var path resolution is needed and the plugin works on macOS, Linux, and Windows without extra setup.
 
 ## Installation
 
 1. Make sure you've already installed `learning-opportunities` from this marketplace.
 
 2. Install this plugin:
+
+   **Claude Code:**
    ```
    /plugin install learning-opportunities-auto@learning-opportunities
-   ```
-
-3. Reload:
-   ```
    /plugin reload
    ```
 
-## Windows Setup
+   **Codex:**
+   ```
+   codex plugin install learning-opportunities-auto@learning-opportunities
+   ```
 
-On Linux, macOS, and WSL2, this plugin works out of the box. On native Windows, Claude Code runs hooks using `cmd.exe` by default, which cannot execute bash scripts. You need to tell Claude Code where to find bash.
+   **GitHub Copilot CLI:**
+   ```
+   copilot plugin install learning-opportunities-auto@learning-opportunities
+   ```
 
-Set the `CLAUDE_CODE_GIT_BASH_PATH` environment variable to point at your Git for Windows bash installation. The typical location is:
+## Windows Setup (Claude Code)
+
+On native Windows, Claude Code runs hooks using `cmd.exe` by default, which cannot execute bash scripts. Set the `CLAUDE_CODE_GIT_BASH_PATH` environment variable to point at your Git for Windows bash installation:
 
 ```
 CLAUDE_CODE_GIT_BASH_PATH=C:\Program Files\Git\bin\bash.exe
@@ -36,15 +55,17 @@ CLAUDE_CODE_GIT_BASH_PATH=C:\Program Files\Git\bin\bash.exe
 
 You can set this as a system environment variable, or add it to your shell profile before launching Claude Code.
 
-If you run into issues, check that `Git\bin` (not just `Git\cmd`) is on your PATH, or that the environment variable above is set correctly. This is a [known friction point](https://github.com/anthropics/claude-code/issues/16602) in Claude Code's Windows hook support. If you're not sure how to set an environment variable or update your PATH on Windows, ask Claude — it can walk you through it.
+This is a [known friction point](https://github.com/anthropics/claude-code/issues/16602) in Claude Code's Windows hook support. GitHub Copilot CLI and Codex do not require this — Copilot ships native PowerShell execution and uses the inlined PowerShell variant of the hook on Windows automatically.
 
-## Codex Support
+## Hook files at a glance
 
-Codex uses `hooks.codex.json`, which runs the same `hooks/post-tool-use.sh` script with a Codex-safe relative command. The script accepts both Claude Code's `command` payload field and Codex-style `cmd` payloads.
+| Platform | Manifest read by client | Hook config |
+|---|---|---|
+| Claude Code | `.claude-plugin/plugin.json` | `hooks/hooks.json` → `hooks/post-tool-use.sh` |
+| Codex | `.codex-plugin/plugin.json` | `hooks.codex.json` → `hooks/post-tool-use.sh` |
+| GitHub Copilot CLI | `plugin.json` (root) | `hooks.copilot.json` (inlined bash + PowerShell) |
 
-## How Hooks Work
-
-This plugin uses post-tool-use hooks to run a script after each shell command. Claude Code reads `hooks/hooks.json`; Codex reads `hooks.codex.json`. The hook script itself lives at `hooks/post-tool-use.sh`.
+The Copilot hook config is generated from `scripts/generate-copilot-hooks.py` at the repo root — edit the cleartext scripts in that file and re-run to update `hooks.copilot.json`.
 
 ## License
 

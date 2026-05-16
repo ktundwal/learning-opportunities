@@ -39,7 +39,13 @@ This repository works as a [GitHub Copilot CLI plugin marketplace](https://docs.
 
    In an interactive Copilot CLI session, run `/skills list` to confirm the skills are available, then invoke them with the skill tool (for example: `Run the learning-opportunities skill on the work we just finished`).
 
-> **Note on `learning-opportunities-auto`:** The post-commit nudge plugin currently targets Claude Code and Codex hook formats. Copilot CLI's `postToolUse` event has different output-injection semantics, so a Copilot-native port is tracked as a follow-up. For now, install only `learning-opportunities` and `orient` on Copilot CLI.
+To get the optional post-commit nudge on Copilot CLI, also install `learning-opportunities-auto`:
+
+```
+copilot plugin install learning-opportunities-auto@learning-opportunities
+```
+
+It uses Copilot's `PostToolUse` + `Stop` / `SubagentStop` hooks to detect `git commit` calls and inject a one-line nudge as the next agent turn. See [`learning-opportunities-auto/README.md`](./learning-opportunities-auto/README.md) for details.
 
 ### Codex
 
@@ -79,11 +85,9 @@ This repository is a [Claude Code plugin marketplace](https://docs.claude.com/en
  
 For more on Claude Code plugins, see the [plugin documentation](https://docs.claude.com/en/docs/claude-code/plugins).
 
-### Automatic Prompting (Optional, Claude Code & Codex)
+### Automatic Prompting (Optional, Claude Code, Codex & GitHub Copilot CLI)
 
-Linux and macOS users can install `learning-opportunities-auto` alongside `learning-opportunities` to have Claude or Codex automatically consider offering an exercise after each git commit. Windows users can use it too — [a little setup is required](./learning-opportunities-auto/README.md#windows-setup).
-
-A GitHub Copilot CLI port of `learning-opportunities-auto` is tracked as a follow-up; the plugin is not yet installable in Copilot CLI.
+You can install `learning-opportunities-auto` alongside `learning-opportunities` to have the agent automatically consider offering an exercise after each git commit. On Claude Code and Codex, native bash and Windows users can follow [a little setup](./learning-opportunities-auto/README.md#windows-setup-claude-code). On GitHub Copilot CLI, the plugin uses native `PostToolUse` + `Stop` / `SubagentStop` hooks with inlined bash and PowerShell, so no extra setup is needed on macOS, Linux, or Windows.
 
 ### Get Repo Orientation Lessons (Optional)
 
