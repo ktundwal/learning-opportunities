@@ -45,14 +45,16 @@ NUDGE = (
 # command contained "git ... commit", touches a per-session marker file
 # under TMPDIR. The marker is consumed later by the Stop/SubagentStop hook.
 #
-# We use `cut -d'"' -f4` instead of sed capture groups to avoid layered
-# escaping inside JSON. Quick-and-dirty grep on the raw JSON string is
-# fine: false positives are harmless (we just nudge unnecessarily).
+# The command-match pattern uses `.*` (matching the original Claude script
+# at hooks/post-tool-use.sh) so we correctly handle JSON-escaped quotes
+# (e.g. `cd "repo with spaces" && git commit ...`). False positives are
+# bounded by the tool_name filter above and the 2-offers-per-session cap
+# enforced in the nudger.
 # -----------------------------------------------------------------------------
 DETECTOR_BASH = r"""set -uo pipefail
 INPUT=$(cat)
 echo "$INPUT" | grep -Eq '"tool_name":"(bash|powershell)"' || exit 0
-echo "$INPUT" | grep -Eq '"command":"[^"]*git[^"]*commit' || exit 0
+echo "$INPUT" | grep -Eq '"command":".*git.*commit' || exit 0
 SID=$(echo "$INPUT" | grep -o '"session_id":"[^"]*"' | head -1 | cut -d'"' -f4)
 [ -z "$SID" ] && exit 0
 SAFE="${SID//[^a-zA-Z0-9_-]/_}"
@@ -64,12 +66,13 @@ exit 0
 # DETECTOR (PostToolUse) -- PowerShell
 #
 # Same logic as the bash version, for Windows. Uses $env:TEMP for the
-# marker directory.
+# marker directory. Pattern uses `.*` to match through JSON-escaped quotes,
+# matching the bash detector's behavior.
 # -----------------------------------------------------------------------------
 DETECTOR_PS = r"""$ErrorActionPreference = 'Stop'
 $in = [Console]::In.ReadToEnd()
 if ($in -notmatch '"tool_name"\s*:\s*"(bash|powershell)"') { exit 0 }
-if ($in -notmatch '"command"\s*:\s*"[^"]*git[^"]*commit') { exit 0 }
+if ($in -notmatch '"command"\s*:\s*".*git.*commit') { exit 0 }
 $m = [regex]::Match($in, '"session_id"\s*:\s*"([^"]+)"')
 if (-not $m.Success) { exit 0 }
 $sid = $m.Groups[1].Value -replace '[^a-zA-Z0-9_-]', '_'

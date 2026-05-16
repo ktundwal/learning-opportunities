@@ -4,8 +4,8 @@
     "PostToolUse": [
       {
         "type": "command",
-        "bash": "set -uo pipefail\nINPUT=$(cat)\necho \"$INPUT\" | grep -Eq '\"tool_name\":\"(bash|powershell)\"' || exit 0\necho \"$INPUT\" | grep -Eq '\"command\":\"[^\"]*git[^\"]*commit' || exit 0\nSID=$(echo \"$INPUT\" | grep -o '\"session_id\":\"[^\"]*\"' | head -1 | cut -d'\"' -f4)\n[ -z \"$SID\" ] && exit 0\nSAFE=\"${SID//[^a-zA-Z0-9_-]/_}\"\ntouch \"${TMPDIR:-/tmp}/lo_auto_copilot_${SAFE}.commit\"\nexit 0\n",
-        "powershell": "$ErrorActionPreference = 'Stop'\n$in = [Console]::In.ReadToEnd()\nif ($in -notmatch '\"tool_name\"\\s*:\\s*\"(bash|powershell)\"') { exit 0 }\nif ($in -notmatch '\"command\"\\s*:\\s*\"[^\"]*git[^\"]*commit') { exit 0 }\n$m = [regex]::Match($in, '\"session_id\"\\s*:\\s*\"([^\"]+)\"')\nif (-not $m.Success) { exit 0 }\n$sid = $m.Groups[1].Value -replace '[^a-zA-Z0-9_-]', '_'\n$tmp = if ($env:TEMP) { $env:TEMP } else { '/tmp' }\n$null = New-Item -ItemType File -Path (Join-Path $tmp (\"lo_auto_copilot_$sid.commit\")) -Force\nexit 0\n",
+        "bash": "set -uo pipefail\nINPUT=$(cat)\necho \"$INPUT\" | grep -Eq '\"tool_name\":\"(bash|powershell)\"' || exit 0\necho \"$INPUT\" | grep -Eq '\"command\":\".*git.*commit' || exit 0\nSID=$(echo \"$INPUT\" | grep -o '\"session_id\":\"[^\"]*\"' | head -1 | cut -d'\"' -f4)\n[ -z \"$SID\" ] && exit 0\nSAFE=\"${SID//[^a-zA-Z0-9_-]/_}\"\ntouch \"${TMPDIR:-/tmp}/lo_auto_copilot_${SAFE}.commit\"\nexit 0\n",
+        "powershell": "$ErrorActionPreference = 'Stop'\n$in = [Console]::In.ReadToEnd()\nif ($in -notmatch '\"tool_name\"\\s*:\\s*\"(bash|powershell)\"') { exit 0 }\nif ($in -notmatch '\"command\"\\s*:\\s*\".*git.*commit') { exit 0 }\n$m = [regex]::Match($in, '\"session_id\"\\s*:\\s*\"([^\"]+)\"')\nif (-not $m.Success) { exit 0 }\n$sid = $m.Groups[1].Value -replace '[^a-zA-Z0-9_-]', '_'\n$tmp = if ($env:TEMP) { $env:TEMP } else { '/tmp' }\n$null = New-Item -ItemType File -Path (Join-Path $tmp (\"lo_auto_copilot_$sid.commit\")) -Force\nexit 0\n",
         "timeoutSec": 5
       }
     ],
